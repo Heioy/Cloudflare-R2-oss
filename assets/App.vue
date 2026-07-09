@@ -1532,13 +1532,16 @@ export default {
   display: grid;
   grid-template-columns: minmax(220px, 1.6fr) 110px 170px 150px 92px;
   align-items: center;
-  min-height: 58px;
   width: 100%;
   padding: 0 14px;
   border-bottom: 1px solid var(--drive-line);
   color: var(--drive-muted);
   column-gap: 12px;
   text-align: left;
+}
+
+.file-row:not(.file-row-head) {
+  height: 58px;
 }
 
 .file-row:last-child {
@@ -1628,6 +1631,7 @@ export default {
 
 .name-text strong {
   color: var(--drive-text);
+  line-height: 20px;
 }
 
 .name-text span {
@@ -1849,7 +1853,10 @@ export default {
 
   .file-row {
     grid-template-columns: minmax(0, 1fr) 76px;
-    min-height: 66px;
+  }
+
+  .file-row:not(.file-row-head) {
+    height: 66px;
   }
 
   .file-row-head,
