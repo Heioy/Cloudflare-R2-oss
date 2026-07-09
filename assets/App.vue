@@ -116,11 +116,11 @@
           <tbody>
             <tr>
               <td>最近一个月使用量</td>
-              <td>{{ formatSize(recentMonthSize) }}</td>
+              <td>{{ formatStorageSize(storageStats.recentMonthSize) }}</td>
             </tr>
             <tr>
-              <td>当前总空间容量</td>
-              <td>{{ formatSize(currentDirSize) }}</td>
+              <td>当前总已用空间</td>
+              <td>{{ formatStorageSize(storageStats.totalSize) }}</td>
             </tr>
           </tbody>
         </table>
@@ -246,7 +246,6 @@
             <div class="type-badge folder">DIR</div>
             <div class="name-text">
               <strong>..</strong>
-              <span>返回上级目录</span>
             </div>
           </div>
           <div>-</div>
@@ -267,7 +266,6 @@
             <div class="type-badge folder">DIR</div>
             <div class="name-text">
               <strong>{{ folderName(folder) }}</strong>
-              <span>{{ folder }}</span>
             </div>
           </div>
           <div>-</div>
@@ -523,6 +521,11 @@ export default {
     showContextMenu: false,
     showMenu: false,
     showUploadPopup: false,
+    storageStats: {
+      recentMonthSize: null,
+      totalSize: null,
+    },
+    storageStatsError: false,
     typeFilter: "all",
     uploadProgress: null,
     uploadQueue: [],
@@ -559,15 +562,6 @@ export default {
 
     normalizedSearch() {
       return this.search.trim().toLowerCase();
-    },
-
-    recentMonthSize() {
-      const recentMonthStart = Date.now() - 30 * 24 * 60 * 60 * 1000;
-      return this.files.reduce((sum, file) => {
-        const uploadedTime = this.fileUploadedTime(file);
-        if (!uploadedTime || uploadedTime < recentMonthStart) return sum;
-        return sum + this.fileSize(file);
-      }, 0);
     },
 
     visibleFiles() {
@@ -727,11 +721,39 @@ export default {
           this.folders = Array.isArray(files.folders) ? files.folders : [];
           this.loading = false;
           this.ensureSelection();
+          this.fetchStorageStats();
         })
         .catch((error) => {
           console.error("Fetch files failed", error);
           this.loading = false;
           this.selectedItem = null;
+        });
+    },
+
+    fetchStorageStats() {
+      this.storageStatsError = false;
+      fetch("/api/storage")
+        .then((res) => {
+          if (!res.ok) throw new Error(`Storage stats failed: ${res.status}`);
+          return res.json();
+        })
+        .then((stats) => {
+          this.storageStats = {
+            recentMonthSize: Number.isFinite(Number(stats.recentMonthSize))
+              ? Number(stats.recentMonthSize)
+              : null,
+            totalSize: Number.isFinite(Number(stats.totalSize))
+              ? Number(stats.totalSize)
+              : null,
+          };
+        })
+        .catch((error) => {
+          console.error("Fetch storage stats failed", error);
+          this.storageStatsError = true;
+          this.storageStats = {
+            recentMonthSize: null,
+            totalSize: null,
+          };
         });
     },
 
@@ -769,12 +791,6 @@ export default {
       return Number.isFinite(size) ? size : 0;
     },
 
-    fileUploadedTime(file) {
-      if (!file || !file.uploaded) return 0;
-      const uploadedTime = new Date(file.uploaded).getTime();
-      return Number.isNaN(uploadedTime) ? 0 : uploadedTime;
-    },
-
     fileTypeLabel(file) {
       const contentType = this.contentType(file);
       if (contentType) return contentType;
@@ -809,6 +825,12 @@ export default {
         i++;
       }
       return `${size.toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
+    },
+
+    formatStorageSize(size) {
+      if (this.storageStatsError) return "-";
+      if (!Number.isFinite(size)) return "统计中...";
+      return this.formatSize(size);
     },
 
     goParent() {
