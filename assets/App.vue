@@ -316,7 +316,7 @@
             />
             <div class="name-text">
               <strong>{{ fileName(file) }}</strong>
-              <span>{{ fileKey(file) }}</span>
+              <span v-if="fileSubtitle(file)">{{ fileSubtitle(file) }}</span>
             </div>
           </div>
           <div>{{ formatSize(fileSize(file)) }}</div>
@@ -763,6 +763,11 @@ export default {
 
     fileKey(file) {
       return (file && file.key) || "";
+    },
+
+    fileSubtitle(file) {
+      const key = this.fileKey(file);
+      return key && key !== this.fileName(file) ? key : "";
     },
 
     fileSize(file) {
