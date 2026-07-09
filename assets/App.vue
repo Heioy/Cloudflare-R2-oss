@@ -1541,7 +1541,7 @@ export default {
 }
 
 .file-row:not(.file-row-head) {
-  height: 58px;
+  height: 45px;
 }
 
 .file-row:last-child {
@@ -1856,7 +1856,7 @@ export default {
   }
 
   .file-row:not(.file-row-head) {
-    height: 66px;
+    height: 45px;
   }
 
   .file-row-head,
