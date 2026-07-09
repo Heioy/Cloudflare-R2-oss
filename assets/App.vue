@@ -103,6 +103,28 @@
           <strong>{{ formatSize(currentDirSize) }}</strong>
         </div>
       </div>
+
+      <div class="side-summary storage-summary">
+        <div class="summary-title">总容量空间统计</div>
+        <table class="storage-table">
+          <thead>
+            <tr>
+              <th>类别</th>
+              <th>容量</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>最近一个月使用量</td>
+              <td>{{ formatSize(recentMonthSize) }}</td>
+            </tr>
+            <tr>
+              <td>当前总空间容量</td>
+              <td>{{ formatSize(currentDirSize) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </aside>
 
     <main class="drive-main">
@@ -540,6 +562,15 @@ export default {
       return this.search.trim().toLowerCase();
     },
 
+    recentMonthSize() {
+      const recentMonthStart = Date.now() - 30 * 24 * 60 * 60 * 1000;
+      return this.files.reduce((sum, file) => {
+        const uploadedTime = this.fileUploadedTime(file);
+        if (!uploadedTime || uploadedTime < recentMonthStart) return sum;
+        return sum + this.fileSize(file);
+      }, 0);
+    },
+
     visibleFiles() {
       let files = this.files;
       if (this.typeFilter !== "all") {
@@ -737,6 +768,12 @@ export default {
     fileSize(file) {
       const size = Number(file && file.size);
       return Number.isFinite(size) ? size : 0;
+    },
+
+    fileUploadedTime(file) {
+      if (!file || !file.uploaded) return 0;
+      const uploadedTime = new Date(file.uploaded).getTime();
+      return Number.isNaN(uploadedTime) ? 0 : uploadedTime;
     },
 
     fileTypeLabel(file) {
@@ -1269,6 +1306,44 @@ export default {
 
 .summary-row strong {
   color: var(--drive-text);
+}
+
+.storage-summary {
+  margin-top: 14px;
+}
+
+.storage-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.storage-table th,
+.storage-table td {
+  padding: 9px 0;
+  border-top: 1px solid var(--drive-line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.storage-table th {
+  color: var(--drive-muted);
+  font-weight: 800;
+}
+
+.storage-table td {
+  color: var(--drive-muted);
+}
+
+.storage-table th:last-child,
+.storage-table td:last-child {
+  text-align: right;
+}
+
+.storage-table td:last-child {
+  color: var(--drive-text);
+  font-weight: 800;
+  white-space: nowrap;
 }
 
 .drive-main {
